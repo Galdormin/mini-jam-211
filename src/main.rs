@@ -5,14 +5,17 @@
 
 mod asset_tracking;
 mod audio;
-mod demo;
+mod camera;
 #[cfg(feature = "dev")]
 mod dev_tools;
 mod menus;
+mod minigames;
 mod screens;
 mod theme;
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
+
+use crate::camera::MainCamera;
 
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
@@ -47,10 +50,11 @@ impl Plugin for AppPlugin {
         app.add_plugins((
             asset_tracking::plugin,
             audio::plugin,
-            demo::plugin,
+            camera::plugin,
             #[cfg(feature = "dev")]
             dev_tools::plugin,
             menus::plugin,
+            minigames::plugin,
             screens::plugin,
             theme::plugin,
         ));
@@ -97,5 +101,5 @@ struct Pause(pub bool);
 struct PausableSystems;
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn((Name::new("Camera"), Camera2d));
+    commands.spawn((Name::new("Camera"), MainCamera));
 }
