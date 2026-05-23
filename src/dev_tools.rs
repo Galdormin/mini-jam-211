@@ -5,7 +5,7 @@ use bevy::{
 };
 
 use crate::{
-    minigames::behaviour::{Draggable, DropZone},
+    minigames::behaviour::{Draggable, DropZone, LimitedDrag},
     screens::Screen,
 };
 
@@ -42,6 +42,7 @@ fn draw_minigame_gizmos(
     mut gizmos: Gizmos,
     draggables: Query<&GlobalTransform, With<Draggable>>,
     drop_zones: Query<(&GlobalTransform, &DropZone)>,
+    limited_drags: Query<&LimitedDrag>,
 ) {
     for transform in &draggables {
         let pos = transform.translation().truncate();
@@ -65,5 +66,10 @@ fn draw_minigame_gizmos(
             zone.0,
             Color::srgb(0.2, 1.0, 0.2),
         );
+    }
+
+    for limited in &limited_drags {
+        let [p1, p2] = limited.0.vertices;
+        gizmos.line_2d(p1, p2, Color::srgb(0.2, 0.6, 1.0));
     }
 }

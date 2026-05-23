@@ -1,6 +1,6 @@
 //! Behavioural components for the minigames
 
-use bevy::prelude::*;
+use bevy::{prelude::*, transform::TransformSystems};
 
 use crate::{AppSystems, PausableSystems, camera::CursorPosition};
 
@@ -12,6 +12,10 @@ pub(super) fn plugin(app: &mut App) {
             .in_set(AppSystems::Update)
             .in_set(PausableSystems),
     );
+    app.add_systems(
+        PostUpdate,
+        on_limited_drag_added.after(TransformSystems::Propagate),
+    );
 }
 
 /// Mark an entity as mouse draggable.
@@ -22,6 +26,17 @@ pub struct Draggable;
 /// Used to update the position of a dragged [`Draggable`] entity.
 #[derive(Component, Clone, Debug)]
 pub struct Dragged(Vec2);
+
+/// Used to limit the movement of a [`Draggable`] entity on a [`Segment2d`]
+#[derive(Component, Clone, Debug)]
+pub struct LimitedDrag(pub Segment2d);
+
+impl LimitedDrag {
+    pub fn progression(&self, pos: Vec2) -> f32 {
+        let d1 = pos.distance(self.0.point1());
+        d1 / self.0.length()
+    }
+}
 
 /// Used to detect drop of a [`Draggable`] entity
 #[derive(Component, Clone, Debug)]
@@ -46,6 +61,17 @@ fn on_draggable_added(mut commands: Commands, draggables: Query<Entity, Added<Dr
             .entity(draggable)
             .observe(on_drag_start)
             .observe(on_drag_end);
+    }
+}
+
+/// Update the local limited drag position to global position
+fn on_limited_drag_added(
+    limited_drags: Query<(&GlobalTransform, &mut LimitedDrag), Added<LimitedDrag>>,
+) {
+    for (transform, mut limited_drag) in limited_drags {
+        limited_drag.0 = limited_drag
+            .0
+            .translated(transform.translation().truncate());
     }
 }
 
@@ -92,12 +118,24 @@ fn on_drag_end(
     Ok(())
 }
 
-fn move_dragged(cards: Query<(&mut Transform, &Dragged)>, cursor_position: Res<CursorPosition>) {
+fn move_dragged(
+    cards: Query<(&mut Transform, &Dragged, Option<&LimitedDrag>)>,
+    cursor_position: Res<CursorPosition>,
+) {
     let Some(cursor_pos) = cursor_position.pos() else {
         return;
     };
 
-    for (mut transform, dragging) in cards {
-        transform.translation = (cursor_pos - dragging.0).extend(transform.translation.z);
+    for (mut transform, dragging, maybe_limited) in cards {
+        let dragged_position = cursor_pos - dragging.0;
+
+        transform.translation = if let Some(limited_drag) = maybe_limited {
+            limited_drag
+                .0
+                .closest_point(dragged_position)
+                .extend(transform.translation.z)
+        } else {
+            dragged_position.extend(transform.translation.z)
+        };
     }
 }

@@ -2,24 +2,14 @@
 
 use bevy::prelude::*;
 
-use crate::{AppSystems, screens::Screen};
+use crate::{AppSystems, minigames::games::MiniGame, screens::Screen};
 
 pub(crate) mod behaviour;
 mod games;
 
 pub(super) fn plugin(app: &mut App) {
-    app.init_state::<MiniGame>();
     app.add_plugins((behaviour::plugin, games::plugin));
     app.add_systems(Update, on_add_start_on_click.in_set(AppSystems::Update));
-}
-
-#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub enum MiniGame {
-    #[default]
-    None,
-    Skeleton,
-    Trash,
-    Other,
 }
 
 /// Start MiniGame on click
@@ -45,7 +35,7 @@ pub(super) fn spawn_minigames_selection(mut commands: Commands) {
             ),
             (
                 Sprite::from_color(Color::srgb_u8(200, 30, 200), vec2(70., 70.)),
-                StartOnClick(MiniGame::Other),
+                StartOnClick(MiniGame::Toilet),
                 Transform::from_translation(vec3(250., 250., 0.1))
             )
         ],

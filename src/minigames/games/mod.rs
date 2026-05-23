@@ -2,13 +2,22 @@
 
 use bevy::prelude::*;
 
-use crate::minigames::MiniGame;
-
 mod skeleton;
+mod toilet;
 mod trash;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((skeleton::plugin, trash::plugin));
+    app.init_state::<MiniGame>();
+    app.add_plugins((skeleton::plugin, toilet::plugin, trash::plugin));
+}
+
+#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+pub enum MiniGame {
+    #[default]
+    None,
+    Skeleton,
+    Trash,
+    Toilet,
 }
 
 pub(super) fn setup_minigame_background(commands: &mut Commands, minigame: MiniGame) -> Entity {

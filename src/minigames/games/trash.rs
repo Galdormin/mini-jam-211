@@ -5,9 +5,8 @@ use bevy::prelude::*;
 use crate::{
     AppSystems,
     minigames::{
-        MiniGame,
-        behaviour::{Draggable, DropZone, ItemDropped},
-        games::setup_minigame_background,
+        behaviour::{Draggable, DropZone, ItemDropped, LimitedDrag},
+        games::{MiniGame, setup_minigame_background},
     },
 };
 
