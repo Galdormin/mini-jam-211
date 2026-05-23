@@ -2,15 +2,23 @@
 
 use bevy::prelude::*;
 
-use crate::{AppSystems, minigames::{MiniGame, behaviour::{Draggable, DropZone, ItemDropped}, games::setup_minigame_background}};
+use crate::{
+    AppSystems,
+    minigames::{
+        MiniGame,
+        behaviour::{Draggable, DropZone, ItemDropped},
+        games::setup_minigame_background,
+    },
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(MiniGame::Skeleton), setup_minigame);
-    app.add_systems(Update,
+    app.add_systems(
+        Update,
         on_bone_dropped
             .in_set(AppSystems::Update)
-            .run_if(in_state(MiniGame::Skeleton)
-    ));
+            .run_if(in_state(MiniGame::Skeleton)),
+    );
 }
 
 #[derive(Component, Clone, Debug, PartialEq, Eq)]
@@ -27,52 +35,52 @@ fn setup_minigame(mut commands: Commands) {
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(200, 50, 50), vec2(100., 40.)),
-        Transform::from_translation(vec3(0., 0., 1.))
+        Transform::from_translation(vec3(0., 0., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         DropZone(vec2(100., 100.)),
         BoneType::Head,
-        Transform::from_translation(vec3(-200., 0., 1.))
+        Transform::from_translation(vec3(-200., 0., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(200, 50, 50), vec2(100., 40.)),
-        Transform::from_translation(vec3(200., 0., 1.))
+        Transform::from_translation(vec3(200., 0., 1.)),
     ));
 
     commands.spawn((
         ChildOf(base),
         DropZone(vec2(100., 100.)),
         BoneType::Torso,
-        Transform::from_translation(vec3(0., 200., 1.))
+        Transform::from_translation(vec3(0., 200., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(50, 200, 50), vec2(40., 100.)),
-        Transform::from_translation(vec3(-200., 200., 1.))
+        Transform::from_translation(vec3(-200., 200., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(50, 200, 50), vec2(40., 100.)),
-        Transform::from_translation(vec3(200., 200., 1.))
+        Transform::from_translation(vec3(200., 200., 1.)),
     ));
 
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(50, 50, 200), vec2(100., 100.)),
-        Transform::from_translation(vec3(0., -200., 1.))
+        Transform::from_translation(vec3(0., -200., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(50, 50, 200), vec2(100., 100.)),
-        Transform::from_translation(vec3(-200., -200., 1.))
+        Transform::from_translation(vec3(-200., -200., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         DropZone(vec2(100., 100.)),
         BoneType::Leg,
-        Transform::from_translation(vec3(200., -200., 1.))
+        Transform::from_translation(vec3(200., -200., 1.)),
     ));
 
     // Droppable
@@ -81,25 +89,23 @@ fn setup_minigame(mut commands: Commands) {
         Draggable,
         BoneType::Head,
         Sprite::from_color(Color::srgb_u8(200, 50, 50), vec2(100., 40.)),
-        Transform::from_translation(vec3(-170., -600., 1.))
+        Transform::from_translation(vec3(-170., -600., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Draggable,
         BoneType::Torso,
         Sprite::from_color(Color::srgb_u8(50, 200, 50), vec2(40., 100.)),
-        Transform::from_translation(vec3(20., -600., 1.))
+        Transform::from_translation(vec3(20., -600., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Draggable,
         BoneType::Leg,
         Sprite::from_color(Color::srgb_u8(50, 50, 200), vec2(100., 100.)),
-        Transform::from_translation(vec3(89., -600., 1.))
+        Transform::from_translation(vec3(89., -600., 1.)),
     ));
-
 }
-
 
 fn on_bone_dropped(
     mut commands: Commands,
@@ -115,7 +121,10 @@ fn on_bone_dropped(
             continue;
         }
 
-        commands.entity(item.item).try_remove::<Draggable>().try_remove::<Pickable>();
+        commands
+            .entity(item.item)
+            .try_remove::<Draggable>()
+            .try_remove::<Pickable>();
         *item_transform = *zone_transform;
     }
 

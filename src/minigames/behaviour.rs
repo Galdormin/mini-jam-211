@@ -6,14 +6,13 @@ use crate::{AppSystems, PausableSystems, camera::CursorPosition};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_message::<ItemDropped>();
-    app.add_systems(Update,
+    app.add_systems(
+        Update,
         (on_draggable_added, move_dragged)
             .in_set(AppSystems::Update)
-            .in_set(PausableSystems)
+            .in_set(PausableSystems),
     );
 }
-
-
 
 /// Mark an entity as mouse draggable.
 #[derive(Component, Clone, Debug, Default)]
@@ -30,7 +29,7 @@ pub struct DropZone(pub Vec2);
 
 impl DropZone {
     fn is_in_zone(&self, zone_position: Vec2, item_position: Vec2) -> bool {
-        let rect = Rect::from_corners(zone_position + self.0/2., zone_position - self.0/2.);
+        let rect = Rect::from_corners(zone_position + self.0 / 2., zone_position - self.0 / 2.);
         rect.contains(item_position)
     }
 }
@@ -42,12 +41,10 @@ pub struct ItemDropped {
     pub in_zone: Entity,
 }
 
-fn on_draggable_added(
-    mut commands: Commands,
-    draggables: Query<Entity, Added<Draggable>>,
-) {
+fn on_draggable_added(mut commands: Commands, draggables: Query<Entity, Added<Draggable>>) {
     for draggable in draggables {
-        commands.entity(draggable)
+        commands
+            .entity(draggable)
             .observe(on_drag_start)
             .observe(on_drag_end);
     }
@@ -60,7 +57,9 @@ fn on_drag_start(
     mut draggables: Query<&mut Transform, With<Draggable>>,
 ) -> Result {
     let mut drag_transform = draggables.get_mut(event.entity)?;
-    let cursor_pos = cursor_position.pos().ok_or("Dragged detected outside of window.")?;
+    let cursor_pos = cursor_position
+        .pos()
+        .ok_or("Dragged detected outside of window.")?;
 
     drag_transform.translation.z = 2.0;
     commands
@@ -82,16 +81,16 @@ fn on_drag_end(
     let item_position = items.get(event.entity)?.translation().truncate();
     for (zone_entity, zone_transform, zone) in zones {
         if zone.is_in_zone(zone_transform.translation().truncate(), item_position) {
-            dropped_message.write(ItemDropped { item: event.entity, in_zone: zone_entity });
+            dropped_message.write(ItemDropped {
+                item: event.entity,
+                in_zone: zone_entity,
+            });
         }
     }
     Ok(())
 }
 
-fn move_dragged(
-    cards: Query<(&mut Transform, &Dragged)>,
-    cursor_position: Res<CursorPosition>,
-) {
+fn move_dragged(cards: Query<(&mut Transform, &Dragged)>, cursor_position: Res<CursorPosition>) {
     let Some(cursor_pos) = cursor_position.pos() else {
         return;
     };

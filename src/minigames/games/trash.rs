@@ -2,15 +2,23 @@
 
 use bevy::prelude::*;
 
-use crate::{AppSystems, minigames::{MiniGame, behaviour::{Draggable, DropZone, ItemDropped}, games::setup_minigame_background}};
+use crate::{
+    AppSystems,
+    minigames::{
+        MiniGame,
+        behaviour::{Draggable, DropZone, ItemDropped},
+        games::setup_minigame_background,
+    },
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(MiniGame::Trash), setup_minigame);
-    app.add_systems(Update,
+    app.add_systems(
+        Update,
         on_item_dropped_in_bin
             .in_set(AppSystems::Update)
-            .run_if(in_state(MiniGame::Trash)
-    ));
+            .run_if(in_state(MiniGame::Trash)),
+    );
 }
 
 fn setup_minigame(mut commands: Commands) {
@@ -25,7 +33,7 @@ fn setup_minigame(mut commands: Commands) {
             Sprite::from_color(Color::srgb_u8(76, 145, 138), vec2(200., 100.)),
             Transform::from_translation(vec3(0., 180., 0.1)),
             DropZone(vec2(210., 110.))
-        )]
+        )],
     ));
 
     // Trash
@@ -33,24 +41,23 @@ fn setup_minigame(mut commands: Commands) {
         Draggable,
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(255, 0, 0), vec2(80., 80.)),
-        Transform::from_translation(vec3(450., -350., 1.))
+        Transform::from_translation(vec3(450., -350., 1.)),
     ));
 
     commands.spawn((
         Draggable,
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(0, 255, 0), vec2(80., 80.)),
-        Transform::from_translation(vec3(250., -260., 1.))
+        Transform::from_translation(vec3(250., -260., 1.)),
     ));
 
     commands.spawn((
         Draggable,
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(0, 0, 255), vec2(80., 80.)),
-        Transform::from_translation(vec3(50., -300., 1.))
+        Transform::from_translation(vec3(50., -300., 1.)),
     ));
 }
-
 
 fn on_item_dropped_in_bin(mut dropped: MessageReader<ItemDropped>, mut commands: Commands) {
     for item in dropped.read() {
