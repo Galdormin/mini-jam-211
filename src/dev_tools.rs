@@ -5,6 +5,7 @@ use bevy::{
 };
 
 use crate::{
+    camera::CursorPosition,
     minigames::behaviour::{Draggable, DropZone, LimitedDrag},
     screens::Screen,
 };
@@ -12,17 +13,22 @@ use crate::{
 #[derive(Resource, Default)]
 struct DebugGizmosEnabled(bool);
 
+#[derive(Component)]
+struct DebugCursorText;
+
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<DebugGizmosEnabled>();
 
     // Log `Screen` state transitions.
     app.add_systems(Update, log_transitions::<Screen>);
 
+    app.add_systems(Startup, spawn_debug_cursor_text);
     app.add_systems(
         Update,
         (
             toggle_debug.run_if(input_just_pressed(TOGGLE_KEY)),
             draw_minigame_gizmos.run_if(guizmo_enabled),
+            update_debug_cursor_text,
         ),
     );
 }
@@ -36,6 +42,44 @@ fn guizmo_enabled(enabled: Res<DebugGizmosEnabled>) -> bool {
 fn toggle_debug(mut options: ResMut<UiDebugOptions>, mut enabled: ResMut<DebugGizmosEnabled>) {
     options.toggle();
     enabled.0 = !enabled.0;
+}
+
+fn spawn_debug_cursor_text(mut commands: Commands) {
+    commands.spawn((
+        DebugCursorText,
+        Text::new(""),
+        TextFont {
+            font_size: 14.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Node {
+            position_type: PositionType::Absolute,
+            left: Val::Px(10.0),
+            bottom: Val::Px(10.0),
+            ..default()
+        },
+        Visibility::Hidden,
+    ));
+}
+
+fn update_debug_cursor_text(
+    enabled: Res<DebugGizmosEnabled>,
+    cursor: Res<CursorPosition>,
+    mut query: Single<(&mut Text, &mut Visibility), With<DebugCursorText>>,
+) {
+    let (ref mut text, ref mut visibility) = *query;
+
+    if !enabled.0 {
+        **visibility = Visibility::Hidden;
+        return;
+    }
+
+    **visibility = Visibility::Visible;
+    text.0 = match cursor.pos() {
+        Some(pos) => format!("Cursor: ({:.0}, {:.0})", pos.x, pos.y),
+        None => "Cursor: outside window".to_string(),
+    };
 }
 
 fn draw_minigame_gizmos(

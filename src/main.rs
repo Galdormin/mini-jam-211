@@ -3,6 +3,8 @@
 // Disable console on Windows for non-dev builds.
 #![cfg_attr(not(feature = "dev"), windows_subsystem = "windows")]
 
+mod math;
+
 mod asset_tracking;
 mod audio;
 mod camera;

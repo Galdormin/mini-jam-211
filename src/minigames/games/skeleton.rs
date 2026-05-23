@@ -6,19 +6,26 @@ use crate::{
     AppSystems,
     minigames::{
         behaviour::{Draggable, DropZone, ItemDropped},
-        games::{MiniGame, setup_minigame_background},
+        games::{MiniGame, MinigameFinished, setup_minigame_background},
     },
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(MiniGame::Skeleton), setup_minigame);
+    app.add_systems(OnExit(MiniGame::Skeleton), cleanup_minigame);
     app.add_systems(
         Update,
-        on_bone_dropped
+        (
+            on_bone_dropped,
+            check_completion.after(on_bone_dropped),
+        )
             .in_set(AppSystems::Update)
             .run_if(in_state(MiniGame::Skeleton)),
     );
 }
+
+#[derive(Resource, Clone, Debug, Default)]
+struct RemainingBones(u32);
 
 #[derive(Component, Clone, Debug, PartialEq, Eq)]
 pub enum BoneType {
@@ -27,7 +34,13 @@ pub enum BoneType {
     Leg,
 }
 
+fn cleanup_minigame(mut commands: Commands) {
+    commands.remove_resource::<RemainingBones>();
+}
+
 fn setup_minigame(mut commands: Commands) {
+    commands.insert_resource(RemainingBones(3));
+
     let base = setup_minigame_background(&mut commands, MiniGame::Skeleton);
 
     // Sample bones
@@ -109,6 +122,7 @@ fn setup_minigame(mut commands: Commands) {
 fn on_bone_dropped(
     mut commands: Commands,
     mut dropped: MessageReader<ItemDropped>,
+    mut remaining_bones: ResMut<RemainingBones>,
     zones: Query<(&Transform, &BoneType), Without<Draggable>>,
     mut items: Query<(&mut Transform, &BoneType), With<Draggable>>,
 ) -> Result {
@@ -125,7 +139,18 @@ fn on_bone_dropped(
             .try_remove::<Draggable>()
             .try_remove::<Pickable>();
         *item_transform = *zone_transform;
+
+        remaining_bones.0 -= 1;
     }
 
     Ok(())
+}
+
+fn check_completion(
+    remaining: Res<RemainingBones>,
+    mut finished: MessageWriter<MinigameFinished>,
+) {
+    if remaining.is_changed() && remaining.0 == 0 {
+        finished.write(MinigameFinished { game: MiniGame::Skeleton });
+    }
 }

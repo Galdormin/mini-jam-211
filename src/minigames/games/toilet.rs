@@ -6,18 +6,20 @@ use crate::{
     AppSystems,
     minigames::{
         behaviour::{Draggable, DropZone, ItemDropped, LimitedDrag},
-        games::{MiniGame, setup_minigame_background},
+        games::{MiniGame, MinigameFinished, setup_minigame_background},
     },
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(MiniGame::Toilet), setup_minigame);
+    app.add_systems(OnExit(MiniGame::Toilet), cleanup_minigame);
     app.add_systems(
         Update,
         (
             on_ventouse_dropped,
             update_ventouse_count,
             update_toilet_sprite,
+            check_completion.after(update_ventouse_count),
         )
             .in_set(AppSystems::Update)
             .run_if(in_state(MiniGame::Toilet)),
@@ -50,7 +52,16 @@ impl Ventouse {
     }
 }
 
+#[derive(Resource, Clone, Debug, Default)]
+struct RemainingToilets(u32);
+
+fn cleanup_minigame(mut commands: Commands) {
+    commands.remove_resource::<RemainingToilets>();
+}
+
 fn setup_minigame(mut commands: Commands) {
+    commands.insert_resource(RemainingToilets(2));
+
     let base = setup_minigame_background(&mut commands, super::MiniGame::Toilet);
 
     // Toilets
@@ -111,6 +122,7 @@ fn on_ventouse_dropped(
 
 fn update_ventouse_count(
     mut commands: Commands,
+    mut remaining_toilets: ResMut<RemainingToilets>,
     ventouses: Query<(Entity, &GlobalTransform, &LimitedDrag, &mut Ventouse)>,
     mut toilets: Query<&mut Toilet, Without<Ventouse>>,
 ) -> Result {
@@ -129,6 +141,7 @@ fn update_ventouse_count(
         // Change toilet status
         let mut toilet = toilets.get_mut(ventouse.toilet.unwrap())?;
         toilet.0 = true;
+        remaining_toilets.0 -= 1;
 
         // Disable limited drag for ventouse
         commands.entity(entity).remove::<LimitedDrag>();
@@ -136,6 +149,15 @@ fn update_ventouse_count(
     }
 
     Ok(())
+}
+
+fn check_completion(
+    remaining: Res<RemainingToilets>,
+    mut finished: MessageWriter<MinigameFinished>,
+) {
+    if remaining.is_changed() && remaining.0 == 0 {
+        finished.write(MinigameFinished { game: MiniGame::Toilet });
+    }
 }
 
 fn update_toilet_sprite(toilets: Query<(&mut Sprite, &Toilet), Changed<Toilet>>) {

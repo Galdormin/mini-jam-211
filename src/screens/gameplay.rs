@@ -2,7 +2,7 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{Pause, menus::Menu, minigames::spawn_minigames_selection, screens::Screen};
+use crate::{Pause, menus::Menu, minigames::level::spawn_minigames_selection, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_minigames_selection);
