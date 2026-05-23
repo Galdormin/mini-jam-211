@@ -13,6 +13,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[allow(unused)]
 pub enum MiniGame {
     #[default]
     None,

@@ -133,10 +133,8 @@ fn update_completion_notification(
     time: Res<Time>,
 ) {
     let count = finished.read().count();
-    if count > 0 {
-        if matches!(state.0, NotificationPhase::Idle) {
-            state.0 = NotificationPhase::Pending(Timer::from_seconds(0.1, TimerMode::Once));
-        }
+    if count > 0 && matches!(state.0, NotificationPhase::Idle) {
+        state.0 = NotificationPhase::Pending(Timer::from_seconds(0.1, TimerMode::Once));
     }
 
     let (ref mut node, ref mut visibility) = *notification;

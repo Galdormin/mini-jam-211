@@ -80,11 +80,10 @@ fn on_item_dropped_in_bin(
     }
 }
 
-fn check_completion(
-    remaining: Res<RemainingTrash>,
-    mut finished: MessageWriter<MinigameFinished>,
-) {
+fn check_completion(remaining: Res<RemainingTrash>, mut finished: MessageWriter<MinigameFinished>) {
     if remaining.is_changed() && remaining.0 == 0 {
-        finished.write(MinigameFinished { game: MiniGame::Trash });
+        finished.write(MinigameFinished {
+            game: MiniGame::Trash,
+        });
     }
 }

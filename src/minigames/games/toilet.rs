@@ -156,7 +156,9 @@ fn check_completion(
     mut finished: MessageWriter<MinigameFinished>,
 ) {
     if remaining.is_changed() && remaining.0 == 0 {
-        finished.write(MinigameFinished { game: MiniGame::Toilet });
+        finished.write(MinigameFinished {
+            game: MiniGame::Toilet,
+        });
     }
 }
 

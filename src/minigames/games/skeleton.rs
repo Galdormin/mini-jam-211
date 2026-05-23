@@ -15,10 +15,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnExit(MiniGame::Skeleton), cleanup_minigame);
     app.add_systems(
         Update,
-        (
-            on_bone_dropped,
-            check_completion.after(on_bone_dropped),
-        )
+        (on_bone_dropped, check_completion.after(on_bone_dropped))
             .in_set(AppSystems::Update)
             .run_if(in_state(MiniGame::Skeleton)),
     );
@@ -146,11 +143,10 @@ fn on_bone_dropped(
     Ok(())
 }
 
-fn check_completion(
-    remaining: Res<RemainingBones>,
-    mut finished: MessageWriter<MinigameFinished>,
-) {
+fn check_completion(remaining: Res<RemainingBones>, mut finished: MessageWriter<MinigameFinished>) {
     if remaining.is_changed() && remaining.0 == 0 {
-        finished.write(MinigameFinished { game: MiniGame::Skeleton });
+        finished.write(MinigameFinished {
+            game: MiniGame::Skeleton,
+        });
     }
 }
