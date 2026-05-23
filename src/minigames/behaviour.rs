@@ -28,9 +28,8 @@ pub struct Dragged(Vec2);
 pub struct DropZone(pub Vec2);
 
 impl DropZone {
-    fn is_in_zone(&self, zone_position: Vec2, item_position: Vec2) -> bool {
-        let rect = Rect::from_corners(zone_position + self.0 / 2., zone_position - self.0 / 2.);
-        rect.contains(item_position)
+    pub fn rect(&self, position: Vec2) -> Rect {
+        Rect::from_corners(position + self.0 / 2., position - self.0 / 2.)
     }
 }
 
@@ -80,7 +79,10 @@ fn on_drag_end(
 
     let item_position = items.get(event.entity)?.translation().truncate();
     for (zone_entity, zone_transform, zone) in zones {
-        if zone.is_in_zone(zone_transform.translation().truncate(), item_position) {
+        if zone
+            .rect(zone_transform.translation().truncate())
+            .contains(item_position)
+        {
             dropped_message.write(ItemDropped {
                 item: event.entity,
                 in_zone: zone_entity,

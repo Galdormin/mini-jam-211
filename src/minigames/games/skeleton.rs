@@ -35,52 +35,52 @@ fn setup_minigame(mut commands: Commands) {
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(200, 50, 50), vec2(100., 40.)),
-        Transform::from_translation(vec3(0., 0., 1.)),
+        Transform::from_translation(vec3(0., 200., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         DropZone(vec2(100., 100.)),
         BoneType::Head,
-        Transform::from_translation(vec3(-200., 0., 1.)),
+        Transform::from_translation(vec3(-200., 200., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(200, 50, 50), vec2(100., 40.)),
-        Transform::from_translation(vec3(200., 0., 1.)),
+        Transform::from_translation(vec3(200., 200., 1.)),
     ));
 
     commands.spawn((
         ChildOf(base),
         DropZone(vec2(100., 100.)),
         BoneType::Torso,
-        Transform::from_translation(vec3(0., 200., 1.)),
+        Transform::from_translation(vec3(0., 400., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(50, 200, 50), vec2(40., 100.)),
-        Transform::from_translation(vec3(-200., 200., 1.)),
+        Transform::from_translation(vec3(-200., 400., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(50, 200, 50), vec2(40., 100.)),
-        Transform::from_translation(vec3(200., 200., 1.)),
+        Transform::from_translation(vec3(200., 400., 1.)),
     ));
 
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(50, 50, 200), vec2(100., 100.)),
-        Transform::from_translation(vec3(0., -200., 1.)),
+        Transform::from_translation(vec3(0., 0., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Sprite::from_color(Color::srgb_u8(50, 50, 200), vec2(100., 100.)),
-        Transform::from_translation(vec3(-200., -200., 1.)),
+        Transform::from_translation(vec3(-200., 0., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         DropZone(vec2(100., 100.)),
         BoneType::Leg,
-        Transform::from_translation(vec3(200., -200., 1.)),
+        Transform::from_translation(vec3(200., 0., 1.)),
     ));
 
     // Droppable
@@ -89,21 +89,21 @@ fn setup_minigame(mut commands: Commands) {
         Draggable,
         BoneType::Head,
         Sprite::from_color(Color::srgb_u8(200, 50, 50), vec2(100., 40.)),
-        Transform::from_translation(vec3(-170., -600., 1.)),
+        Transform::from_translation(vec3(-170., -400., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Draggable,
         BoneType::Torso,
         Sprite::from_color(Color::srgb_u8(50, 200, 50), vec2(40., 100.)),
-        Transform::from_translation(vec3(20., -600., 1.)),
+        Transform::from_translation(vec3(20., -400., 1.)),
     ));
     commands.spawn((
         ChildOf(base),
         Draggable,
         BoneType::Leg,
         Sprite::from_color(Color::srgb_u8(50, 50, 200), vec2(100., 100.)),
-        Transform::from_translation(vec3(89., -600., 1.)),
+        Transform::from_translation(vec3(89., -400., 1.)),
     ));
 }
 

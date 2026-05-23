@@ -28,6 +28,7 @@ dev = [
     "bevy/dynamic_linking",
     "bevy/bevy_dev_tools",
     "bevy/bevy_ui_debug",
+    "bevy/bevy_gizmos",
     # Improve error messages coming from Bevy
     "bevy/track_location",
 ]

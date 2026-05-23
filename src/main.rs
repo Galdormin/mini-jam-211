@@ -35,7 +35,7 @@ impl Plugin for AppPlugin {
                 })
                 .set(WindowPlugin {
                     primary_window: Window {
-                        title: "Mini Jam 211".to_string(),
+                        title: "Dinojam".to_string(),
                         fit_canvas_to_parent: true,
                         ..default()
                     }

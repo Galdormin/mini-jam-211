@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{AppSystems, screens::Screen};
 
-mod behaviour;
+pub(crate) mod behaviour;
 mod games;
 
 pub(super) fn plugin(app: &mut App) {
