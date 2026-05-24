@@ -37,7 +37,7 @@ impl Plugin for AppPlugin {
                 })
                 .set(WindowPlugin {
                     primary_window: Window {
-                        title: "Dinojam".to_string(),
+                        title: "Save the Museum".to_string(),
                         fit_canvas_to_parent: true,
                         ..default()
                     }

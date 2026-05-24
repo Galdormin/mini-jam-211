@@ -46,6 +46,7 @@ fn setup_title(mut commands: Commands, menu_assets: Res<MenuAssets>) {
         music(menu_assets.music.clone()),
     ));
 }
+
 fn open_main_menu(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Main);
 }

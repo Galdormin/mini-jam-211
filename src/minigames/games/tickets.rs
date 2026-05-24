@@ -119,7 +119,7 @@ fn setup_minigame(mut commands: Commands, assets: Res<TicketAssets>) {
     commands.insert_resource(TicketsState::VisitorEntering { t: 0., visitor });
 }
 
-fn spawn_visitor(commands: &mut Commands, images: &Vec<Handle<Image>>, base: Entity) -> Entity {
+fn spawn_visitor(commands: &mut Commands, images: &[Handle<Image>], base: Entity) -> Entity {
     let image = images.choose(&mut rand::rng()).unwrap().clone();
 
     commands

@@ -8,5 +8,10 @@ pub mod level;
 pub mod score;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((behaviour::plugin, games::plugin, level::plugin, score::plugin));
+    app.add_plugins((
+        behaviour::plugin,
+        games::plugin,
+        level::plugin,
+        score::plugin,
+    ));
 }

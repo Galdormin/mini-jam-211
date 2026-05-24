@@ -51,14 +51,14 @@ concurrency:
 # Configure the release workflow by editing the following values.
 env:
   # The base filename of the binary produced by `cargo build`.
-  cargo_build_binary_name: dinojam
+  cargo_build_binary_name: save-the-museum
 
   # The path to the assets directory.
   assets_path: assets
 
   # The itch.io project to deploy to in the format `user-name/project-name`.
   # There will be no deployment to itch.io if this is commented out.
-  itch_page: galdormin/dinojam
+  itch_page: galdormin/save-the-museum
 
   # The ID of the app produced by this workflow.
   # Applies to macOS releases.

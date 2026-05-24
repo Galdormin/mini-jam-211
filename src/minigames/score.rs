@@ -3,10 +3,14 @@
 use bevy::prelude::*;
 
 use crate::{
-    AppSystems, audio::Music, math::*, minigames::games::MinigameFinished, screens::Screen,
+    AppSystems,
+    audio::Music,
+    math::*,
+    minigames::games::{MiniGame, MinigameFinished},
+    screens::Screen,
 };
 
-const GAME_DURATION_SECS: f32 = 300.0;
+const GAME_DURATION_SECS: f32 = 150.0;
 pub(super) const DRAIN_BASE: f32 = 0.005;
 pub(super) const DRAIN_PER_TASK: f32 = 0.02;
 const COMPLETION_BONUS: f32 = 0.30;
@@ -30,6 +34,7 @@ pub(super) fn plugin(app: &mut App) {
                 on_task_completed_progress,
                 update_progress_ui,
                 update_music_speed.run_if(resource_changed::<GameTimer>),
+                check_game_end,
             )
                 .in_set(AppSystems::Update)
                 .run_if(in_state(Screen::Gameplay)),
@@ -156,6 +161,21 @@ fn update_progress_ui(
 
     let secs = timer.0 as u32;
     timer_text.0 = format!("{}:{:02}", secs / 60, secs % 60);
+}
+
+fn check_game_end(
+    progress: Res<GameProgress>,
+    timer: Res<GameTimer>,
+    mut next_screen: ResMut<NextState<Screen>>,
+    mut next_game: ResMut<NextState<MiniGame>>,
+) {
+    if timer.0 <= 0.0 {
+        next_game.set(MiniGame::None);
+        next_screen.set(Screen::Outro(true));
+    } else if progress.0 <= 0.0 {
+        next_game.set(MiniGame::None);
+        next_screen.set(Screen::Outro(false));
+    }
 }
 
 fn update_music_speed(timer: Res<GameTimer>, mut music_sinks: Query<&AudioSink, With<Music>>) {

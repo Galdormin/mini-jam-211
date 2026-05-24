@@ -80,6 +80,7 @@ fn spawn_intro(mut commands: Commands, intro_assets: Res<IntroAssets>) {
             color: Color::srgba(1., 1., 1., 0.),
             ..default()
         },
+        Transform::from_scale(Vec3::splat(0.75)),
         Visibility::Hidden,
     ));
 
@@ -89,8 +90,8 @@ fn spawn_intro(mut commands: Commands, intro_assets: Res<IntroAssets>) {
         Draggable,
         DespawnOnExit(Screen::Intro),
         Sprite::from_image(intro_assets.phone_unlocker.clone()),
-        Transform::from_translation(vec3(-150., -350., 1.)),
-        LimitedDrag(Segment2d::new(vec2(0., 0.), vec2(400., 0.))),
+        Transform::from_translation(vec3(-165., -375., 1.)).with_scale(Vec3::splat(0.75)),
+        LimitedDrag(Segment2d::new(vec2(0., 0.), vec2(320., 0.))),
         Visibility::Hidden,
     ));
 
@@ -99,7 +100,7 @@ fn spawn_intro(mut commands: Commands, intro_assets: Res<IntroAssets>) {
         PhoneDropZone,
         DropZone(vec2(80., 80.)),
         DespawnOnExit(Screen::Intro),
-        Transform::from_translation(vec3(250., -350., 0.)),
+        Transform::from_translation(vec3(155., -375., 0.)),
     ));
 }
 
