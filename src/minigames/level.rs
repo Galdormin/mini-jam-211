@@ -6,7 +6,7 @@ use rand::Rng as _;
 use crate::{
     AppSystems,
     asset_tracking::LoadResource,
-    audio::music,
+    audio::{music, sound_effect},
     math::*,
     minigames::games::{MiniGame, MinigameFinished},
     screens::Screen,
@@ -48,16 +48,64 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Resource, Asset, Clone, Reflect)]
 #[reflect(Resource)]
-struct LevelAssets {
+pub(crate) struct LevelAssets {
+    #[dependency]
+    background: Handle<Image>,
+    #[dependency]
+    skeleton: [Handle<Image>; 2],
+    #[dependency]
+    toilets: [Handle<Image>; 2],
+    #[dependency]
+    cashier: [Handle<Image>; 2],
+    #[dependency]
+    trash: [Handle<Image>; 2],
+    #[dependency]
+    pannels: Handle<Image>,
     #[dependency]
     music: Handle<AudioSource>,
+    #[dependency]
+    task_completed_sfx: Handle<AudioSource>,
+    #[dependency]
+    new_task_sfx: Handle<AudioSource>,
 }
 
 impl FromWorld for LevelAssets {
     fn from_world(world: &mut World) -> Self {
         let assets = world.resource::<AssetServer>();
         Self {
-            music: assets.load("audio/music/game_loop.mp3"),
+            background: assets.load("images/level/background.png"),
+            skeleton: [
+                assets.load("images/level/skeleton_full.png"),
+                assets.load("images/level/skeleton_broken.png"),
+            ],
+            toilets: [
+                assets.load("images/level/toilets_clean.png"),
+                assets.load("images/level/toilets_dirty.png"),
+            ],
+            cashier: [
+                assets.load("images/level/cashier_empty.png"),
+                assets.load("images/level/cashier_visitors.png"),
+            ],
+            trash: [
+                assets.load("images/level/trash_clean.png"),
+                assets.load("images/level/trash_dirty.png"),
+            ],
+            pannels: assets.load("images/level/panneaux.png"),
+            music: assets.load("audio/music/game_loop.ogg"),
+            task_completed_sfx: assets.load("audio/sound_effects/task_completed.mp3"),
+            new_task_sfx: assets.load("audio/sound_effects/new_task.mp3"),
+        }
+    }
+}
+
+impl LevelAssets {
+    fn get_minigame_assets(&self, minigame: MiniGame) -> Option<&[Handle<Image>; 2]> {
+        match minigame {
+            MiniGame::Skeleton => Some(&self.skeleton),
+            MiniGame::Cashier => Some(&self.cashier),
+            MiniGame::Toilet => Some(&self.toilets),
+            MiniGame::Trash => Some(&self.trash),
+            _ => None,
         }
     }
 }
@@ -105,10 +153,6 @@ struct LevelTooltip;
 #[derive(Component)]
 struct CompletionNotification;
 
-/// Marker component for the task indicator
-#[derive(Component)]
-struct TaskIndicator;
-
 /// Minigame finished notification state machine
 #[derive(Default)]
 enum NotificationPhase {
@@ -132,7 +176,7 @@ fn reset_completion_state(mut state: ResMut<CompletionState>) {
 #[require(Pickable)]
 pub struct StartOnClick(MiniGame);
 
-pub(crate) fn spawn_minigames_selection(mut commands: Commands) {
+pub(crate) fn spawn_minigames_selection(mut commands: Commands, level_assets: Res<LevelAssets>) {
     // Hover tooltip
     commands.spawn((
         LevelTooltip,
@@ -174,59 +218,42 @@ pub(crate) fn spawn_minigames_selection(mut commands: Commands) {
         )],
     ));
 
-    // Background
+    // Root entity — toutes les entités du niveau en sont enfants
+    // Les images sont 2560×1440 ; à scale 0.75 elles font 1920×1080 (viewport exact)
     let bg = commands
         .spawn((
-            Sprite::from_color(Color::srgb_u8(45, 45, 45), vec2(2000., 2000.)),
+            Transform::default(),
+            Visibility::default(),
             DespawnOnExit(Screen::Gameplay),
         ))
         .id();
 
-    // Tasks
-    let tasks = [
-        (
-            Color::srgb_u8(249, 231, 231),
-            vec2(500., 300.),
-            MiniGame::Skeleton,
-            vec3(-200., -150., 0.1),
-        ),
-        (
-            Color::srgb_u8(76, 147, 138),
-            vec2(20., 40.),
-            MiniGame::Trash,
-            vec3(-360., 250., 0.1),
-        ),
-        (
-            Color::srgb_u8(200, 30, 200),
-            vec2(360., 150.),
-            MiniGame::Toilet,
-            vec3(-650., 270., 0.1),
-        ),
-        (
-            Color::srgb_u8(200, 30, 30),
-            vec2(340., 200.),
-            MiniGame::Cashier,
-            vec3(770., 100., 0.1),
-        ),
-    ];
+    commands.spawn((
+        ChildOf(bg),
+        Sprite::from_image(level_assets.background.clone()),
+        Transform::from_scale(Vec3::splat(0.75)),
+    ));
 
-    for (color, size, game, pos) in tasks {
-        let task = commands
-            .spawn((
-                ChildOf(bg),
-                Sprite::from_color(color, size),
-                StartOnClick(game),
-                Transform::from_translation(pos),
-                TaskState::Available,
-            ))
-            .id();
+    commands.spawn((
+        ChildOf(bg),
+        Sprite::from_image(level_assets.pannels.clone()),
+        Transform::from_translation(vec3(0., 0., 0.2)).with_scale(Vec3::splat(0.75)),
+    ));
 
+    // Sprites décoratifs (non-interactifs)
+    for (minigame, pos) in [
+        (MiniGame::Skeleton, vec2(-390., -200.)),
+        (MiniGame::Toilet, vec2(-577., 420.)),
+        (MiniGame::Cashier, vec2(725., -100.)),
+        (MiniGame::Trash, vec2(-350., 350.)),
+    ] {
+        let images = level_assets.get_minigame_assets(minigame).unwrap();
         commands.spawn((
-            ChildOf(task),
-            TaskIndicator,
-            Sprite::from_color(Color::srgb_u8(255, 160, 0), vec2(40., 40.)),
-            Transform::from_translation(vec3(0., size.y / 2. + 35., 0.1)),
-            Visibility::Hidden,
+            ChildOf(bg),
+            StartOnClick(minigame),
+            TaskState::Available,
+            Sprite::from_image(images[0].clone()),
+            Transform::from_translation(pos.extend(0.1)).with_scale(Vec3::splat(0.75)),
         ));
     }
 }
@@ -243,6 +270,8 @@ fn tick_cooldowns(mut tasks: Query<&mut TaskState, With<StartOnClick>>, time: Re
 }
 
 fn tick_next_task_timer(
+    mut commands: Commands,
+    level_assets: Res<LevelAssets>,
     mut timer: ResMut<NextTaskTimer>,
     mut tasks: Query<(Entity, &mut TaskState), With<StartOnClick>>,
     time: Res<Time>,
@@ -267,6 +296,9 @@ fn tick_next_task_timer(
         return;
     }
 
+    // Play sfx
+    commands.spawn(sound_effect(level_assets.new_task_sfx.clone()));
+
     let chosen = available[rand::rng().random_range(0..available.len())];
     if let Ok((_, mut state)) = tasks.get_mut(chosen) {
         *state = TaskState::Active;
@@ -287,18 +319,18 @@ fn on_minigame_finished(
 }
 
 fn update_task_indicators(
-    tasks: Query<(&TaskState, &Children), (With<StartOnClick>, Changed<TaskState>)>,
-    mut indicators: Query<&mut Visibility, With<TaskIndicator>>,
+    level_assets: Res<LevelAssets>,
+    tasks: Query<(&mut Sprite, &StartOnClick, &TaskState), Changed<TaskState>>,
 ) {
-    for (state, children) in &tasks {
-        for &child in children {
-            if let Ok(mut visibility) = indicators.get_mut(child) {
-                *visibility = match state {
-                    TaskState::Active => Visibility::Visible,
-                    _ => Visibility::Hidden,
-                };
-            }
-        }
+    for (mut sprite, minigame, state) in tasks {
+        let Some(sprites) = level_assets.get_minigame_assets(minigame.0) else {
+            continue;
+        };
+
+        sprite.image = match state {
+            TaskState::Active => sprites[1].clone(),
+            _ => sprites[0].clone(),
+        };
     }
 }
 
@@ -318,9 +350,9 @@ fn on_click_start_on_click(
     starts: Query<(&StartOnClick, &TaskState)>,
 ) -> Result {
     let (start, state) = starts.get(event.entity)?;
-    // if !matches!(state, TaskState::Active) {
-    //     return Ok(());
-    // }
+    if !matches!(state, TaskState::Active) {
+        return Ok(());
+    }
 
     minigame.set(**start);
     Ok(())
@@ -334,7 +366,7 @@ fn on_hover_start_on_click(
     let Ok((mut transform, start)) = starts.get_mut(event.entity) else {
         return;
     };
-    transform.scale = 1.1 * Vec3::ONE;
+    transform.scale = Vec3::splat(0.82);
 
     let (ref mut text, ref mut visibility) = *tooltip;
     text.0 = start.title().to_string();
@@ -349,13 +381,15 @@ fn on_out_start_on_click(
     let Ok(mut transform) = starts.get_mut(event.entity) else {
         return;
     };
-    transform.scale = Vec3::ONE;
+    transform.scale = Vec3::splat(0.75);
 
     let (_, ref mut visibility) = *tooltip;
     **visibility = Visibility::Hidden;
 }
 
 fn update_completion_notification(
+    mut commands: Commands,
+    level_assets: Res<LevelAssets>,
     mut state: ResMut<CompletionState>,
     mut notification: Single<(&mut Node, &mut Visibility), With<CompletionNotification>>,
     mut finished: MessageReader<MinigameFinished>,
@@ -376,6 +410,9 @@ fn update_completion_notification(
             if timer.just_finished() {
                 **visibility = Visibility::Visible;
                 state.0 = NotificationPhase::Entering(0.0);
+
+                // Play sfx
+                commands.spawn(sound_effect(level_assets.task_completed_sfx.clone()));
             }
         }
         NotificationPhase::Entering(t) => {
