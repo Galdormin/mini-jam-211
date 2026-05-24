@@ -107,7 +107,7 @@ impl LevelAssets {
     fn get_minigame_assets(&self, minigame: MiniGame) -> Option<&[Handle<Image>; 2]> {
         match minigame {
             MiniGame::Skeleton => Some(&self.skeleton),
-            MiniGame::Cashier => Some(&self.cashier),
+            MiniGame::Tickets => Some(&self.cashier),
             MiniGame::Toilet => Some(&self.toilets),
             MiniGame::Trash => Some(&self.trash),
             _ => None,
@@ -247,7 +247,7 @@ pub(crate) fn spawn_minigames_selection(mut commands: Commands, level_assets: Re
     for (minigame, pos) in [
         (MiniGame::Skeleton, vec2(-390., -200.)),
         (MiniGame::Toilet, vec2(-572., 420.)),
-        (MiniGame::Cashier, vec2(725., -100.)),
+        (MiniGame::Tickets, vec2(725., -100.)),
         (MiniGame::Trash, vec2(-350., 350.)),
     ] {
         let images = level_assets.get_minigame_assets(minigame).unwrap();

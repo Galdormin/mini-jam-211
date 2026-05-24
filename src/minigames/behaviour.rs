@@ -6,9 +6,10 @@ use crate::{AppSystems, PausableSystems, camera::CursorPosition};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_message::<ItemDropped>();
+    app.add_message::<ItemClicked>();
     app.add_systems(
         Update,
-        (on_draggable_added, move_dragged)
+        (on_draggable_added, on_clickable_added, move_dragged)
             .in_set(AppSystems::Update)
             .in_set(PausableSystems),
     );
@@ -48,11 +49,32 @@ impl DropZone {
     }
 }
 
+/// Mark an entity as mouse clickable.
+#[derive(Component, Clone, Debug, Default)]
+#[require(Pickable)]
+pub struct Clickable;
+
+/// [`Message`] sent every time a [`Clickable`] entity is clicked.
+#[derive(Message, Clone, Debug)]
+pub struct ItemClicked {
+    pub item: Entity,
+}
+
 /// [`Message`] sent everytime a [`Draggable`] entity is dropped into a [`DropZone`]
 #[derive(Message, Clone, Debug)]
 pub struct ItemDropped {
     pub item: Entity,
     pub in_zone: Entity,
+}
+
+fn on_clickable_added(mut commands: Commands, clickables: Query<Entity, Added<Clickable>>) {
+    for clickable in clickables {
+        commands.entity(clickable).observe(on_click);
+    }
+}
+
+fn on_click(event: On<Pointer<Click>>, mut clicked: MessageWriter<ItemClicked>) {
+    clicked.write(ItemClicked { item: event.entity });
 }
 
 fn on_draggable_added(mut commands: Commands, draggables: Query<Entity, Added<Draggable>>) {

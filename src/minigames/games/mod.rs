@@ -3,13 +3,19 @@
 use bevy::prelude::*;
 
 mod skeleton;
+mod tickets;
 mod toilet;
 mod trash;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_state::<MiniGame>();
     app.add_message::<MinigameFinished>();
-    app.add_plugins((skeleton::plugin, toilet::plugin, trash::plugin));
+    app.add_plugins((
+        skeleton::plugin,
+        tickets::plugin,
+        toilet::plugin,
+        trash::plugin,
+    ));
 }
 
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
@@ -17,8 +23,7 @@ pub(super) fn plugin(app: &mut App) {
 pub enum MiniGame {
     #[default]
     None,
-    Cashier,
-    PopCorn,
+    Tickets,
     Skeleton,
     Trash,
     Toilet,
@@ -28,11 +33,10 @@ impl MiniGame {
     pub fn title(self) -> &'static str {
         match self {
             MiniGame::None => "",
-            MiniGame::Cashier => "Caisse",
-            MiniGame::PopCorn => "Machine à Pop-corn",
-            MiniGame::Skeleton => "Squelette de Spinosaure",
-            MiniGame::Trash => "Poubelle",
-            MiniGame::Toilet => "Toilettes",
+            MiniGame::Tickets => "Ticket desk",
+            MiniGame::Skeleton => "Spinosaurus skeleton",
+            MiniGame::Trash => "Paper bib",
+            MiniGame::Toilet => "Toilets",
         }
     }
 }
