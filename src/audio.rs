@@ -1,4 +1,9 @@
-use bevy::prelude::*;
+use std::ops::Range;
+
+use bevy::{audio::Volume, prelude::*};
+use rand::Rng;
+
+const SOUND_EFFECT_VOLUME: f32 = -10.0; // dB
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -30,7 +35,25 @@ pub struct SoundEffect;
 
 /// A sound effect audio instance.
 pub fn sound_effect(handle: Handle<AudioSource>) -> impl Bundle {
-    (AudioPlayer(handle), PlaybackSettings::DESPAWN, SoundEffect)
+    (
+        AudioPlayer(handle),
+        PlaybackSettings::DESPAWN.with_volume(Volume::Decibels(SOUND_EFFECT_VOLUME)),
+        SoundEffect,
+    )
+}
+
+/// A random speed sound effect audio instance.
+pub fn sound_effect_random_speed(
+    handle: Handle<AudioSource>,
+    speed_range: Range<f32>,
+) -> impl Bundle {
+    (
+        AudioPlayer(handle),
+        PlaybackSettings::DESPAWN
+            .with_volume(Volume::Decibels(SOUND_EFFECT_VOLUME))
+            .with_speed(rand::rng().random_range(speed_range)),
+        SoundEffect,
+    )
 }
 
 /// [`GlobalVolume`] doesn't apply to already-running audio entities, so this system will update them.

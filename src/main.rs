@@ -46,6 +46,12 @@ impl Plugin for AppPlugin {
                 }),
         );
 
+        // No transparency mask for picking
+        app.insert_resource(SpritePickingSettings {
+            picking_mode: SpritePickingMode::BoundingBox,
+            ..default()
+        });
+
         // Add other plugins.
         app.add_plugins((
             asset_tracking::plugin,

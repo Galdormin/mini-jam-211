@@ -6,7 +6,7 @@ use rand::{Rng, seq::IndexedRandom};
 use crate::{
     AppSystems,
     asset_tracking::LoadResource,
-    audio::SoundEffect,
+    audio::{SoundEffect, sound_effect_random_speed},
     minigames::{
         behaviour::{Draggable, DropZone, ItemDropped},
         games::{MiniGame, MinigameFinished, setup_minigame_background},
@@ -56,7 +56,7 @@ impl FromWorld for TrashAssets {
                 assets.load("images/minigames/trash/trash_5.png"),
                 assets.load("images/minigames/trash/trash_6.png"),
             ],
-            trash_sounds: assets.load("audio/sound_effects/trash/paper_sound.mp3"),
+            trash_sounds: assets.load("audio/sound_effects/paper_sound.mp3"),
         }
     }
 }
@@ -138,15 +138,9 @@ fn on_item_dropped_in_bin(
         remaining.remaining -= 1;
 
         // Play sfx
-        commands.spawn((
-            AudioPlayer(trash_assets.trash_sounds.clone()),
-            PlaybackSettings {
-                mode: bevy::audio::PlaybackMode::Despawn,
-                volume: Volume::Decibels(-10.),
-                speed: rand::rng().random_range(0.9..1.3),
-                ..default()
-            },
-            SoundEffect,
+        commands.spawn(sound_effect_random_speed(
+            trash_assets.trash_sounds.clone(),
+            0.9..1.3,
         ));
     }
 }

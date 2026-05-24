@@ -1,9 +1,12 @@
 //! MiniGame: Clean the toilets
 
 use bevy::prelude::*;
+use rand::{Rng as _, seq::SliceRandom as _};
 
 use crate::{
     AppSystems,
+    asset_tracking::LoadResource,
+    audio::sound_effect,
     minigames::{
         behaviour::{Draggable, DropZone, ItemDropped, LimitedDrag},
         games::{MiniGame, MinigameFinished, setup_minigame_background},
@@ -11,6 +14,7 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
+    app.load_resource::<ToiletAssets>();
     app.add_systems(OnEnter(MiniGame::Toilet), setup_minigame);
     app.add_systems(OnExit(MiniGame::Toilet), cleanup_minigame);
     app.add_systems(
@@ -24,6 +28,31 @@ pub(super) fn plugin(app: &mut App) {
             .in_set(AppSystems::Update)
             .run_if(in_state(MiniGame::Toilet)),
     );
+}
+
+#[derive(Resource, Asset, Clone, Reflect)]
+#[reflect(Resource)]
+pub struct ToiletAssets {
+    #[dependency]
+    toilet_clean: Handle<Image>,
+    #[dependency]
+    toilet_dirty: Handle<Image>,
+    #[dependency]
+    ventouse: Handle<Image>,
+    #[dependency]
+    flush_sfx: Handle<AudioSource>,
+}
+
+impl FromWorld for ToiletAssets {
+    fn from_world(world: &mut World) -> Self {
+        let assets = world.resource::<AssetServer>();
+        Self {
+            toilet_clean: assets.load("images/minigames/toilet/toilet_clean.png"),
+            toilet_dirty: assets.load("images/minigames/toilet/toilet_dirty.png"),
+            ventouse: assets.load("images/minigames/toilet/ventouse.png"),
+            flush_sfx: assets.load("audio/sound_effects/toilet_flush.ogg"),
+        }
+    }
 }
 
 #[derive(Component, Clone, Debug, Default)]
@@ -59,38 +88,49 @@ fn cleanup_minigame(mut commands: Commands) {
     commands.remove_resource::<RemainingToilets>();
 }
 
-fn setup_minigame(mut commands: Commands) {
-    commands.insert_resource(RemainingToilets(2));
+fn setup_minigame(mut commands: Commands, assets: Res<ToiletAssets>) {
+    let n_dirty = rand::rng().random_range(1..=3_usize);
+    let mut indices = [0usize, 1, 2];
+    indices.shuffle(&mut rand::rng());
+    let dirty: &[usize] = &indices[..n_dirty];
 
-    let base = setup_minigame_background(&mut commands, super::MiniGame::Toilet);
+    commands.insert_resource(RemainingToilets(n_dirty as u32));
 
-    // Toilets
-    commands.spawn((
-        ChildOf(base),
-        Toilet::default(),
-        DropZone(vec2(210., 370.)),
-        Sprite::from_color(Color::srgb_u8(200, 200, 200), vec2(200., 360.)),
-        Transform::from_translation(vec3(-300., -50., 1.)),
-    ));
-    commands.spawn((
-        ChildOf(base),
-        Toilet::default(),
-        DropZone(vec2(210., 370.)),
-        Sprite::from_color(Color::srgb_u8(200, 200, 200), vec2(200., 360.)),
-        Transform::from_translation(vec3(300., -50., 1.)),
-    ));
+    let base = setup_minigame_background(&mut commands, MiniGame::Toilet);
+
+    let positions = [
+        vec3(-430., -50., 1.),
+        vec3(0., -50., 1.),
+        vec3(430., -50., 1.),
+    ];
+
+    for (i, pos) in positions.iter().enumerate() {
+        let is_dirty = dirty.contains(&i);
+        let image = if is_dirty {
+            assets.toilet_dirty.clone()
+        } else {
+            assets.toilet_clean.clone()
+        };
+
+        let mut entity = commands.spawn((
+            ChildOf(base),
+            Toilet(!is_dirty),
+            Sprite::from_image(image),
+            Transform::from_translation(*pos).with_scale(Vec3::splat(0.35)),
+        ));
+
+        if is_dirty {
+            entity.insert(DropZone(vec2(160., 200.)));
+        }
+    }
 
     // Ventouse
     commands.spawn((
         ChildOf(base),
         Ventouse::default(),
         Draggable,
-        Sprite::from_color(Color::srgb_u8(50, 50, 200), vec2(20., 200.)),
-        Transform::from_translation(vec3(-500., -150., 1.1)),
-        children![(
-            Sprite::from_color(Color::srgb_u8(200, 50, 50), vec2(60., 60.)),
-            Transform::from_translation(vec3(0., -100., 0.1)),
-        )],
+        Sprite::from_image(assets.ventouse.clone()),
+        Transform::from_translation(vec3(-680., -100., 1.1)).with_scale(Vec3::splat(0.5)),
     ));
 }
 
@@ -111,10 +151,9 @@ fn on_ventouse_dropped(
         commands.entity(item.in_zone).remove::<DropZone>();
 
         ventouse.toilet = Some(item.in_zone);
-        ventouse_transform.translation = toilet_transform
-            .translation
-            .truncate()
-            .extend(ventouse_transform.translation.z);
+
+        let pos = toilet_transform.translation.truncate() + vec2(0., 50.);
+        ventouse_transform.translation = pos.extend(ventouse_transform.translation.z);
     }
 
     Ok(())
@@ -122,6 +161,7 @@ fn on_ventouse_dropped(
 
 fn update_ventouse_count(
     mut commands: Commands,
+    toilet_assets: Res<ToiletAssets>,
     mut remaining_toilets: ResMut<RemainingToilets>,
     ventouses: Query<(Entity, &GlobalTransform, &LimitedDrag, &mut Ventouse)>,
     mut toilets: Query<&mut Toilet, Without<Ventouse>>,
@@ -138,12 +178,11 @@ fn update_ventouse_count(
             continue;
         }
 
-        // Change toilet status
         let mut toilet = toilets.get_mut(ventouse.toilet.unwrap())?;
         toilet.0 = true;
         remaining_toilets.0 -= 1;
+        commands.spawn(sound_effect(toilet_assets.flush_sfx.clone()));
 
-        // Disable limited drag for ventouse
         commands.entity(entity).remove::<LimitedDrag>();
         ventouse.reset();
     }
@@ -162,12 +201,15 @@ fn check_completion(
     }
 }
 
-fn update_toilet_sprite(toilets: Query<(&mut Sprite, &Toilet), Changed<Toilet>>) {
+fn update_toilet_sprite(
+    toilets: Query<(&mut Sprite, &Toilet), Changed<Toilet>>,
+    assets: Res<ToiletAssets>,
+) {
     for (mut sprite, toilet) in toilets {
-        if toilet.0 {
-            sprite.color = Color::srgb_u8(200, 200, 200);
+        sprite.image = if toilet.0 {
+            assets.toilet_clean.clone()
         } else {
-            sprite.color = Color::srgb_u8(200, 100, 0);
-        }
+            assets.toilet_dirty.clone()
+        };
     }
 }
