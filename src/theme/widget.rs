@@ -28,6 +28,27 @@ pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
     )
 }
 
+/// A root UI node specific for the title screen.
+pub fn ui_menu(name: impl Into<Cow<'static, str>>) -> impl Bundle {
+    (
+        Name::new(name),
+        Node {
+            position_type: PositionType::Absolute,
+            top: px(200),
+            right: px((1920 - 600) / 2),
+            width: px(600),
+            height: px(300),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            flex_direction: FlexDirection::Column,
+            row_gap: px(20),
+            ..default()
+        },
+        // Don't block picking events for other UI roots.
+        Pickable::IGNORE,
+    )
+}
+
 /// A simple header label. Bigger than [`label`].
 pub fn header(text: impl Into<String>) -> impl Bundle {
     (
@@ -59,8 +80,8 @@ where
         text,
         action,
         Node {
-            width: px(380),
-            height: px(80),
+            width: px(250),
+            height: px(50),
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
             border_radius: BorderRadius::MAX,
@@ -119,7 +140,7 @@ where
                     children![(
                         Name::new("Button Text"),
                         Text(text),
-                        TextFont::from_font_size(40.0),
+                        TextFont::from_font_size(30.0),
                         TextColor(BUTTON_TEXT),
                         // Don't bubble picking events from the text up to the button.
                         Pickable::IGNORE,

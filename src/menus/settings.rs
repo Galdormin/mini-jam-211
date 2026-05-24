@@ -21,7 +21,7 @@ pub(super) fn plugin(app: &mut App) {
 
 fn spawn_settings_menu(mut commands: Commands) {
     commands.spawn((
-        widget::ui_root("Settings Menu"),
+        widget::ui_menu("Settings Menu"),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Settings),
         children![
@@ -44,7 +44,7 @@ fn settings_grid() -> impl Bundle {
         },
         children![
             (
-                widget::label("Master Volume"),
+                widget::label("Volume"),
                 Node {
                     justify_self: JustifySelf::End,
                     ..default()
