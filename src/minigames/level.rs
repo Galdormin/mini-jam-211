@@ -287,9 +287,9 @@ fn on_click_start_on_click(
     starts: Query<(&StartOnClick, &TaskState)>,
 ) -> Result {
     let (start, state) = starts.get(event.entity)?;
-    if !matches!(state, TaskState::Active) {
-        return Ok(());
-    }
+    // if !matches!(state, TaskState::Active) {
+    //     return Ok(());
+    // }
 
     minigame.set(**start);
     Ok(())
