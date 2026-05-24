@@ -5,6 +5,8 @@ use rand::Rng as _;
 
 use crate::{
     AppSystems,
+    asset_tracking::LoadResource,
+    audio::music,
     math::*,
     minigames::games::{MiniGame, MinigameFinished},
     screens::Screen,
@@ -20,7 +22,12 @@ const WAIT_MAX_SECS: f32 = 8.0;
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<CompletionState>();
     app.init_resource::<NextTaskTimer>();
-    app.add_systems(OnEnter(Screen::Gameplay), reset_completion_state);
+    app.load_resource::<LevelAssets>();
+
+    app.add_systems(
+        OnEnter(Screen::Gameplay),
+        (reset_completion_state, start_music),
+    );
     app.add_systems(
         Update,
         (
@@ -37,6 +44,30 @@ pub(super) fn plugin(app: &mut App) {
                 .run_if(in_state(Screen::Gameplay)),
         ),
     );
+}
+
+#[derive(Resource, Asset, Clone, Reflect)]
+#[reflect(Resource)]
+struct LevelAssets {
+    #[dependency]
+    music: Handle<AudioSource>,
+}
+
+impl FromWorld for LevelAssets {
+    fn from_world(world: &mut World) -> Self {
+        let assets = world.resource::<AssetServer>();
+        Self {
+            music: assets.load("audio/music/game_loop.mp3"),
+        }
+    }
+}
+
+fn start_music(mut commands: Commands, credits_music: Res<LevelAssets>) {
+    commands.spawn((
+        Name::new("Game Music"),
+        DespawnOnExit(Screen::Title),
+        music(credits_music.music.clone()),
+    ));
 }
 
 /// State for the minigame tasks

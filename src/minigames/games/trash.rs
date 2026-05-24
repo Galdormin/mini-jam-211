@@ -1,12 +1,12 @@
 //! MiniGame: Trash all the trashes
 
-use bevy::{audio::Volume, prelude::*};
+use bevy::prelude::*;
 use rand::{Rng, seq::IndexedRandom};
 
 use crate::{
     AppSystems,
     asset_tracking::LoadResource,
-    audio::{SoundEffect, sound_effect_random_speed},
+    audio::sound_effect_random_speed,
     minigames::{
         behaviour::{Draggable, DropZone, ItemDropped},
         games::{MiniGame, MinigameFinished, setup_minigame_background},
