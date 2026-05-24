@@ -113,7 +113,7 @@ impl LevelAssets {
 fn start_music(mut commands: Commands, credits_music: Res<LevelAssets>) {
     commands.spawn((
         Name::new("Game Music"),
-        DespawnOnExit(Screen::Title),
+        DespawnOnExit(Screen::Gameplay),
         music(credits_music.music.clone()),
     ));
 }
@@ -243,7 +243,7 @@ pub(crate) fn spawn_minigames_selection(mut commands: Commands, level_assets: Re
     // Sprites décoratifs (non-interactifs)
     for (minigame, pos) in [
         (MiniGame::Skeleton, vec2(-390., -200.)),
-        (MiniGame::Toilet, vec2(-577., 420.)),
+        (MiniGame::Toilet, vec2(-572., 420.)),
         (MiniGame::Cashier, vec2(725., -100.)),
         (MiniGame::Trash, vec2(-350., 350.)),
     ] {
