@@ -1,4 +1,4 @@
-//! Task level behaviuour
+//! Task level behaviour
 
 use bevy::prelude::*;
 use rand::Rng as _;
@@ -8,7 +8,10 @@ use crate::{
     asset_tracking::LoadResource,
     audio::{music, sound_effect},
     math::*,
-    minigames::games::{MiniGame, MinigameFinished},
+    minigames::{
+        games::{MiniGame, MinigameFinished},
+        score::{DRAIN_BASE, DRAIN_PER_TASK, GameProgress, GameTimer},
+    },
     screens::Screen,
 };
 
@@ -18,6 +21,8 @@ const NOTIF_ON_Y: f32 = 1080. / 2.;
 const COOLDOWN_SECS: f32 = 5.0;
 const WAIT_MIN_SECS: f32 = 2.0;
 const WAIT_MAX_SECS: f32 = 8.0;
+const WAIT_MIN_FAST: f32 = 0.5;
+const WAIT_MAX_FAST: f32 = 2.0;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<CompletionState>();
@@ -31,7 +36,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            (tick_cooldowns, tick_next_task_timer)
+            (tick_cooldowns, tick_next_task_timer, tick_game_progress)
                 .in_set(AppSystems::TickTimers)
                 .run_if(in_state(Screen::Gameplay)),
             (
@@ -149,7 +154,7 @@ impl Default for NextTaskTimer {
 #[derive(Component)]
 struct LevelTooltip;
 
-/// Marker component for the minifame completion notification
+/// Marker component for the minigame completion notification
 #[derive(Component)]
 struct CompletionNotification;
 
@@ -209,17 +214,16 @@ pub(crate) fn spawn_minigames_selection(mut commands: Commands, level_assets: Re
         },
         Visibility::Hidden,
         children![(
-            Text::new("Minijeu terminé"),
+            Text::new("Task Completed"),
             TextFont {
-                font_size: 48.0,
+                font_size: 65.0,
                 ..default()
             },
             TextColor(Color::WHITE),
         )],
     ));
 
-    // Root entity — toutes les entités du niveau en sont enfants
-    // Les images sont 2560×1440 ; à scale 0.75 elles font 1920×1080 (viewport exact)
+    // Root entity
     let bg = commands
         .spawn((
             Transform::default(),
@@ -240,7 +244,6 @@ pub(crate) fn spawn_minigames_selection(mut commands: Commands, level_assets: Re
         Transform::from_translation(vec3(0., 0., 0.2)).with_scale(Vec3::splat(0.75)),
     ));
 
-    // Sprites décoratifs (non-interactifs)
     for (minigame, pos) in [
         (MiniGame::Skeleton, vec2(-390., -200.)),
         (MiniGame::Toilet, vec2(-572., 420.)),
@@ -272,6 +275,7 @@ fn tick_cooldowns(mut tasks: Query<&mut TaskState, With<StartOnClick>>, time: Re
 fn tick_next_task_timer(
     mut commands: Commands,
     level_assets: Res<LevelAssets>,
+    game_timer: Res<GameTimer>,
     mut timer: ResMut<NextTaskTimer>,
     mut tasks: Query<(Entity, &mut TaskState), With<StartOnClick>>,
     time: Res<Time>,
@@ -281,8 +285,11 @@ fn tick_next_task_timer(
         return;
     }
 
+    let urgency = game_timer.urgency();
+    let wait_min = lerp(WAIT_MIN_SECS, WAIT_MIN_FAST, urgency);
+    let wait_max = lerp(WAIT_MAX_SECS, WAIT_MAX_FAST, urgency);
     timer.0 = Timer::from_seconds(
-        rand::rng().random_range(WAIT_MIN_SECS..WAIT_MAX_SECS),
+        rand::rng().random_range(wait_min..wait_max),
         TimerMode::Once,
     );
 
@@ -296,13 +303,25 @@ fn tick_next_task_timer(
         return;
     }
 
-    // Play sfx
     commands.spawn(sound_effect(level_assets.new_task_sfx.clone()));
 
     let chosen = available[rand::rng().random_range(0..available.len())];
     if let Ok((_, mut state)) = tasks.get_mut(chosen) {
         *state = TaskState::Active;
     }
+}
+
+fn tick_game_progress(
+    mut progress: ResMut<GameProgress>,
+    tasks: Query<&TaskState, With<StartOnClick>>,
+    time: Res<Time>,
+) {
+    let active = tasks
+        .iter()
+        .filter(|s| matches!(s, TaskState::Active))
+        .count();
+    let drain = DRAIN_BASE + active as f32 * DRAIN_PER_TASK;
+    progress.0 = (progress.0 - drain * time.delta_secs()).max(0.0);
 }
 
 fn on_minigame_finished(
@@ -410,8 +429,6 @@ fn update_completion_notification(
             if timer.just_finished() {
                 **visibility = Visibility::Visible;
                 state.0 = NotificationPhase::Entering(0.0);
-
-                // Play sfx
                 commands.spawn(sound_effect(level_assets.task_completed_sfx.clone()));
             }
         }
