@@ -97,7 +97,7 @@ impl FromWorld for LevelAssets {
             ],
             pannels: assets.load("images/level/panneaux.png"),
             music: assets.load("audio/music/game_loop.ogg"),
-            task_completed_sfx: assets.load("audio/sound_effects/task_completed.mp3"),
+            task_completed_sfx: assets.load("audio/sound_effects/task_completed.ogg"),
             new_task_sfx: assets.load("audio/sound_effects/new_task.mp3"),
         }
     }

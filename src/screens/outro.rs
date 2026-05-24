@@ -40,7 +40,11 @@ fn spawn_outro(win: bool) -> impl Fn(Commands, Res<OutroAssets>) {
             assets.background_loose.clone()
         };
 
-        commands.spawn((DespawnOnExit(screen), Sprite::from_image(image)));
+        commands.spawn((
+            DespawnOnExit(screen),
+            Sprite::from_image(image),
+            Transform::from_scale(Vec3::splat(0.75)),
+        ));
 
         // Boutons en bas à droite
         commands

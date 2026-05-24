@@ -14,7 +14,7 @@ const GAME_DURATION_SECS: f32 = 150.0;
 pub(super) const DRAIN_BASE: f32 = 0.005;
 pub(super) const DRAIN_PER_TASK: f32 = 0.02;
 const COMPLETION_BONUS: f32 = 0.30;
-const MUSIC_SPEED_MAX: f32 = 1.8;
+const MUSIC_SPEED_MAX: f32 = 1.6;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<GameProgress>();
